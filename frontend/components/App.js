@@ -1,88 +1,86 @@
-import React from 'react'
+import React from 'react';
+import axios from 'axios';
+import Form from './Form';
 import TodoList from './TodoList';
-import Form from './Form'
 
 const URL = 'http://localhost:9000/api/todos'
 
 export default class App extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      todos: [
-        {
-          name: 'Organize Garage',
-          id: 1528817077286, // could look different, you could use a timestamp to generate it
-          completed: false
-        },
-        {
-          name: 'Bake Cookies',
-          id: 1528817084358,
-          completed: false
-        },
-        {
-          name: 'Personal Training',
-          id: 1528817077290, // could look different, you could use a timestamp to generate it
-          completed: true
-        },{
-          name: 'Learn React',
-          id: 1528817077294, // could look different, you could use a timestamp to generate it
-          completed: true
-        },
-      ]
+  state = {
+    todos: [],
+    error: '',
+    todoNameInput: '',
+    displayCompleted: true,
+  }
+
+  onTodoNameInputChange = evt => {
+    const { value } = evt.target
+    this.setState({...this.state, todoNameInput: value })
+  }
+
+  resetForm = () => this.setState({ ...this.state, todoNameInput: '' })
+
+  setAxiosResponseError = () => this.setState({ ...this.state, error: err.response.data.message })
+
+  postNewTodo = () => {
+    axios.post(URL, { name: this.state.todoNameInput})
+      .then(res => {
+        this.setState({...this.state, todos: this.state.todos.concat(res.data.data) })
+        this.resetForm()
+      })
+      .catch(this.setAxiosResponseError)
     }
   }
 
-  handleAdd = (name) => {
-
-    const newTodo = {
-      name: name,
-      id: Date.now(),
-      completed: false
-    }
-
-    this.setState({
-      ...this.state,
-      todos: [...this.state.todos, newTodo]
-    })
+  onTodoFormSubmit = evt => {
+    evt.preventDefault()
+    this.postNewTodo()
   }
 
-handleClear = () => {
-    // set state 
-  this.setState({
-    ...this.state, 
-    // loop through all todos
-  todos:this.state.todos.filter(todo => {
-  // remove all todos that have completion = false
-  //save filtered todos to state
-    return (todo.completed === false);
-  })
-})
-}
+  fetchAllTodos = () => {
+    axios.get(URL)
+      .then(res => {
+        this.setState({ ...this.state, todos: res.data.data})
+      })
+      .catch(this.setAxiosResponseError)
+  }
+  
+  toggleCompleted = id => () => {
+    axios.patch(`${URL}/${id}`)
+      .then(res => {
+        this.setState({ ...this.state, todos: this.state.todos.map(td => {
+              if (td.id !== id) return td
+              return res.data.data
+            })
+          })
+      })
+      .catch(this.setAxiosResponseError)
+  }
 
-handleToggle = (clickedId) => {
+  toggleDisplayCompleted = () => {
+    this.setState({...this.state, displayCompleted: !this.state.displayCompleted})
+   }
 
-  this.setState({
-    ...this.state,
-    todos: this.state.todos.map(todo=> {
-      if (todo.id === clickedId) {
-        return {
-          ...todo,
-          completed: !todo.completed
-        } 
-      }
-        return todo
-    })
-  })
-}
+  componentDidMount() {
+    this.fetchAllTodos()
+  }
 
   render() {
-    const {todos} = this.state;
-
     return (
       <div>
-        <TodoList handleToggle={this.handleToggle}todos={todos}/>
-        <Form handleAdd={this.handleAdd}/>
-        <button onClick={this.handleClear}>Clear</button>
+        <div id="error"> Error: {this.state.error}} </div>
+        <TodoList 
+          todos={this.state.todos}
+          displayCompleted={this.state.displayCompleted}
+          toggleCompleted={this.toggleCompleted}
+        />
+        <Form
+          onTodoFormSubmit={this.onTodoFormSubmit}
+          onTodoNameInputChange={this.onTodoNameInputChange}
+          toggleDisplayCompleted={this.toggleDisplayCompleted}
+          todoNameInput={this.state.todoNameInput}
+          displayCompleted={this.state.displayCompleted}
+        />
       </div>
     )
   }

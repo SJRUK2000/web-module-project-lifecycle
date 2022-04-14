@@ -1,30 +1,25 @@
 import React from 'react'
 
 export default class Form extends React.Component {
-  constructor () {
-    super();
-    this.state = {
-      input: ''
-    }
-  }
-  handleSubmit = (e) => {
-    e.preventDefault();
-    this.props.handleAdd(this.state.input);
-  }
-
-  handleChange = (e) => {
-    this.setState({
-      ...this.state,
-      input : e.target.value
-    })
-  }
-
   render() {
     return (
-      <form>
-          <input onChange={this.handleChange}/>
-          <button onClick={this.handleSubmit}>Add</button>
+    <>
+      <form id="todoForm" onSubmit={this.props.onTodoFormSubmit}>
+        <input 
+          value={this.props.todoNameInput}
+          onChange={this.props.onTodoNameInputChange}
+          type="text" 
+          placeholder="Type todo">
+        </input>
+        <input 
+          type="submit">
+        </input>
         </form>
-    )
-  }
+        <button 
+          onClick={this.props.toggleDisplayCompleted}
+        > 
+          {this.props.displayCompleted ? 'Hide' : 'Show'} Clear Completed
+        </button>
+    </>
+    )}
 }
